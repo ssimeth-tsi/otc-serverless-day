@@ -11,6 +11,11 @@ env:
   PYTHON_VERSION: '3.9'
   TERRAFORM_VERSION: '1.5.7'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
@@ -176,9 +181,7 @@ jobs:
                     "min_ms": round(min(response_times), 2),
                     "max_ms": round(max(response_times), 2),
                     "mean_ms": round(statistics.mean(response_times), 2),
-                    "median_ms": round(statistics.median(response_times), 2),
-                    "p95_ms": round(statistics.quantiles(response_times, n=20)[18], 2) if len(response_times) > 20 else None,
-                    "p99_ms": round(statistics.quantiles(response_times, n=100)[98], 2) if len(response_times) > 100 else None
+                    "median_ms": round(statistics.median(response_times), 2)
                 }
             else:
                 return {"error": "All requests failed"}
@@ -234,8 +237,6 @@ jobs:
         | Mean Response Time | {data['mean_ms']} ms |
         | Median Response Time | {data['median_ms']} ms |
         | Max Response Time | {data['max_ms']} ms |
-        | P95 Response Time | {data.get('p95_ms', 'N/A')} ms |
-        | P99 Response Time | {data.get('p99_ms', 'N/A')} ms |
         """
 
         comment = f"""## 🚀 Performance Test Results for PR #{sys.argv[1]}
@@ -261,25 +262,24 @@ jobs:
         else:
             comment += "\n❌ **Significant performance issues detected. Please investigate before merging.**"
 
-        with open("pr_comment.md", "w") as f:
-            f.write(comment)
+        # Save as JSON for safer GitHub Actions output
+        output_data = {"comment": comment}
+        with open("pr_comment.json", "w") as f:
+            json.dump(output_data, f)
         
         print(comment)
         EOF
         
         python format_results.py "${{ github.event.pull_request.number }}" "${{ steps.terraform_apply.outputs.api_url }}"
-        
-        # Save comment to output
-        echo "comment<<EOF" >> $GITHUB_OUTPUT
-        cat pr_comment.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Post Performance Results to PR
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const comment = `${{ steps.format_results.outputs.comment }}`;
+          const fs = require('fs');
+          const commentData = JSON.parse(fs.readFileSync('pr_comment.json', 'utf8'));
+          const comment = commentData.comment;
           
           // Try to find and update existing comment
           const { data: comments } = await github.rest.issues.listComments({
@@ -321,7 +321,12 @@ jobs:
         echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
         echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Performance test results have been posted to the PR comments." >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        # Also add performance results to summary
+        if [ -f "pr_comment.json" ]; then
+          cat pr_comment.json | jq -r '.comment' >> $GITHUB_STEP_SUMMARY
+        fi
 
   cleanup-on-close:
     if: github.event.action == 'closed'
