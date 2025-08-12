@@ -72,6 +72,8 @@ jobs:
     - name: Terraform Plan
       working-directory: ./terraform
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -85,6 +87,8 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       working-directory: ./terraform
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -96,6 +100,8 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       working-directory: ./terraform
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -113,6 +119,8 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       working-directory: ./terraform
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
