@@ -45,7 +45,6 @@ resource "opentelekomcloud_apigw_api_v2" "root_api" {
   }
 }
 
-
 # API Group erstellen
 resource "opentelekomcloud_apigw_group_v2" "user_api_group" {
   instance_id = var.api_gateway_id
@@ -86,4 +85,18 @@ output "api_info" {
     gateway_id      = var.api_gateway_id
   }
   description = "API information"
+}
+
+# Separate outputs to avoid GitHub masking
+output "api_base_url" {
+  value = format("https://%s.apic.eu-de.otc.t-systems.com", opentelekomcloud_apigw_group_v2.user_api_group.id)
+  description = "Base URL of the API"
+}
+
+output "api_endpoints" {
+  value = {
+    root  = "/"
+    users = "/users"
+  }
+  description = "Available API endpoints"
 }

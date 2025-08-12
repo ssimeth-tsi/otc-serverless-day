@@ -115,9 +115,26 @@ jobs:
         echo "### Deployment successful! 🚀" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "#### API Endpoints:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Get outputs without masking
+        BASE_URL=$(terraform output -raw api_base_url)
+        
+        # Display as clickable links
+        echo "**Base URL:** \`$BASE_URL\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Endpoints:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Additional info
+        echo "<details><summary>📋 All Outputs</summary>" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+        terraform output -json | jq '.' >> $GITHUB_STEP_SUMMARY
         echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-        terraform output -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"' >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "</details>" >> $GITHUB_STEP_SUMMARY
 
     - name: Test API Health Check
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -132,7 +149,8 @@ jobs:
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
       run: |
-        API_URL=$(terraform output -json | jq -r '.api_info.value.user_api_url')
+        BASE_URL=$(terraform output -raw api_base_url)
+        API_URL="${BASE_URL}/users"
         echo "Testing API at: $API_URL"
         curl -f --max-time 30 "$API_URL" || echo "API test failed"
       continue-on-error: true

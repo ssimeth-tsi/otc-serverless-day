@@ -105,9 +105,11 @@ jobs:
         terraform apply -auto-approve \
           -var="function_name_suffix=-pr-${{ github.event.pull_request.number }}"
         
-        # Capture outputs
-        API_URL=$(terraform output -raw api_info | jq -r '.user_api_url')
+        # Capture outputs without masking
+        BASE_URL=$(terraform output -raw api_base_url)
+        API_URL="${BASE_URL}/users"
         echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+        echo "base_url=$BASE_URL" >> $GITHUB_OUTPUT
 
     - name: Wait for API to be ready
       run: |
@@ -312,7 +314,12 @@ jobs:
         echo "### 🚀 PR Preview Deployment Successful!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
-        echo "**API URL:** ${{ steps.terraform_apply.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**API Endpoints:**" >> $GITHUB_STEP_SUMMARY
+        BASE_URL="${{ steps.terraform_apply.outputs.base_url }}"
+        echo "- Base: \`$BASE_URL\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "Performance test results have been posted to the PR comments." >> $GITHUB_STEP_SUMMARY
 
