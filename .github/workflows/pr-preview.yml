@@ -1,0 +1,389 @@
+name: PR Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - master
+
+env:
+  PYTHON_VERSION: '3.9'
+  TERRAFORM_VERSION: '1.5.7'
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install dependencies for packaging
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Build Linux dependencies with Docker
+      run: |
+        echo "Building dependencies for Linux..."
+        chmod +x packDependencies.sh
+        ./packDependencies.sh
+
+    - name: Create deployment package
+      run: |
+        echo "Creating code.zip..."
+        python3 createZip.py
+        ls -lh code.zip
+        echo "Package size: $(du -h code.zip | cut -f1)"
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+      run: |
+        terraform init \
+          -backend-config="access_key=${{ secrets.OTC_ACCESS_KEY }}" \
+          -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}"
+
+    - name: Create/Select PR Workspace
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+      run: |
+        WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
+        terraform workspace select $WORKSPACE_NAME || terraform workspace new $WORKSPACE_NAME
+
+    - name: Terraform Plan
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+        TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
+      run: |
+        terraform plan -out=tfplan \
+          -var="function_name_suffix=-pr-${{ github.event.pull_request.number }}"
+
+    - name: Terraform Apply
+      id: terraform_apply
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+        TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
+      run: |
+        terraform apply -auto-approve \
+          -var="function_name_suffix=-pr-${{ github.event.pull_request.number }}"
+        
+        # Capture outputs
+        API_URL=$(terraform output -raw api_info | jq -r '.user_api_url')
+        echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+
+    - name: Wait for API to be ready
+      run: |
+        echo "Waiting for API to be ready..."
+        for i in {1..30}; do
+          if curl -s -o /dev/null -w "%{http_code}" "${{ steps.terraform_apply.outputs.api_url }}" | grep -q "200\|404"; then
+            echo "API is ready!"
+            break
+          fi
+          echo "Attempt $i/30 - API not ready yet..."
+          sleep 5
+        done
+
+    - name: Run Performance Tests
+      id: performance_test
+      run: |
+        API_URL="${{ steps.terraform_apply.outputs.api_url }}"
+        echo "Running performance tests against: $API_URL"
+        
+        # Create performance test script
+        cat > performance_test.py << 'EOF'
+        import requests
+        import time
+        import json
+        import sys
+        import statistics
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        def test_endpoint(url, num_requests=100):
+            response_times = []
+            errors = 0
+            
+            def make_request():
+                try:
+                    start = time.time()
+                    response = requests.get(url, timeout=10)
+                    duration = (time.time() - start) * 1000  # Convert to ms
+                    return duration, response.status_code
+                except Exception as e:
+                    return None, str(e)
+            
+            # Warm up
+            for _ in range(5):
+                make_request()
+            
+            # Actual test
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = [executor.submit(make_request) for _ in range(num_requests)]
+                
+                for future in as_completed(futures):
+                    duration, status = future.result()
+                    if duration is not None:
+                        response_times.append(duration)
+                        if status != 200:
+                            errors += 1
+                    else:
+                        errors += 1
+            
+            if response_times:
+                return {
+                    "total_requests": num_requests,
+                    "successful_requests": len(response_times),
+                    "failed_requests": errors,
+                    "min_ms": round(min(response_times), 2),
+                    "max_ms": round(max(response_times), 2),
+                    "mean_ms": round(statistics.mean(response_times), 2),
+                    "median_ms": round(statistics.median(response_times), 2),
+                    "p95_ms": round(statistics.quantiles(response_times, n=20)[18], 2) if len(response_times) > 20 else None,
+                    "p99_ms": round(statistics.quantiles(response_times, n=100)[98], 2) if len(response_times) > 100 else None
+                }
+            else:
+                return {"error": "All requests failed"}
+
+        if __name__ == "__main__":
+            api_url = sys.argv[1]
+            
+            print("Testing root endpoint...")
+            root_results = test_endpoint(api_url.replace("/users", "/"))
+            
+            print("Testing users endpoint...")
+            users_results = test_endpoint(api_url)
+            
+            results = {
+                "root_endpoint": root_results,
+                "users_endpoint": users_results,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+            }
+            
+            print(json.dumps(results, indent=2))
+            
+            # Save results for GitHub comment
+            with open("performance_results.json", "w") as f:
+                json.dump(results, f, indent=2)
+        EOF
+        
+        pip install requests
+        python performance_test.py "$API_URL" | tee performance_output.txt
+
+    - name: Format Performance Results
+      id: format_results
+      run: |
+        cat > format_results.py << 'EOF'
+        import json
+        import sys
+
+        with open("performance_results.json", "r") as f:
+            results = json.load(f)
+
+        def format_endpoint_results(name, data):
+            if "error" in data:
+                return f"### {name}\n❌ {data['error']}\n"
+            
+            success_rate = (data['successful_requests'] / data['total_requests']) * 100
+            emoji = "✅" if success_rate >= 95 else "⚠️" if success_rate >= 80 else "❌"
+            
+            return f"""### {name}
+        {emoji} Success Rate: {success_rate:.1f}% ({data['successful_requests']}/{data['total_requests']})
+        
+        | Metric | Value |
+        |--------|-------|
+        | Min Response Time | {data['min_ms']} ms |
+        | Mean Response Time | {data['mean_ms']} ms |
+        | Median Response Time | {data['median_ms']} ms |
+        | Max Response Time | {data['max_ms']} ms |
+        | P95 Response Time | {data.get('p95_ms', 'N/A')} ms |
+        | P99 Response Time | {data.get('p99_ms', 'N/A')} ms |
+        """
+
+        comment = f"""## 🚀 Performance Test Results for PR #{sys.argv[1]}
+
+        **Timestamp:** {results['timestamp']}
+        **API URL:** `{sys.argv[2]}`
+
+        {format_endpoint_results("Root Endpoint (/)", results['root_endpoint'])}
+
+        {format_endpoint_results("Users Endpoint (/users)", results['users_endpoint'])}
+
+        ### 📊 Performance Summary
+        """
+
+        # Add overall assessment
+        root_success = results['root_endpoint'].get('successful_requests', 0) / results['root_endpoint'].get('total_requests', 1) * 100
+        users_success = results['users_endpoint'].get('successful_requests', 0) / results['users_endpoint'].get('total_requests', 1) * 100
+        
+        if root_success >= 95 and users_success >= 95:
+            comment += "\n✅ **All endpoints performing well!**"
+        elif root_success >= 80 and users_success >= 80:
+            comment += "\n⚠️ **Some performance issues detected. Please review the metrics above.**"
+        else:
+            comment += "\n❌ **Significant performance issues detected. Please investigate before merging.**"
+
+        with open("pr_comment.md", "w") as f:
+            f.write(comment)
+        
+        print(comment)
+        EOF
+        
+        python format_results.py "${{ github.event.pull_request.number }}" "${{ steps.terraform_apply.outputs.api_url }}"
+        
+        # Save comment to output
+        echo "comment<<EOF" >> $GITHUB_OUTPUT
+        cat pr_comment.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Post Performance Results to PR
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const comment = `${{ steps.format_results.outputs.comment }}`;
+          
+          // Try to find and update existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('Performance Test Results')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: comment
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+          }
+
+    - name: Add Deployment Info to Summary
+      run: |
+        echo "### 🚀 PR Preview Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+        echo "**API URL:** ${{ steps.terraform_apply.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Performance test results have been posted to the PR comments." >> $GITHUB_STEP_SUMMARY
+
+  cleanup-on-close:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Terraform Init
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+      run: |
+        terraform init \
+          -backend-config="access_key=${{ secrets.OTC_ACCESS_KEY }}" \
+          -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}"
+
+    - name: Select PR Workspace
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+      run: |
+        WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
+        terraform workspace select $WORKSPACE_NAME
+
+    - name: Destroy PR Environment
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+        TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
+      run: |
+        terraform destroy -auto-approve \
+          -var="function_name_suffix=-pr-${{ github.event.pull_request.number }}"
+
+    - name: Delete PR Workspace
+      working-directory: ./terraform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+        AWS_S3_ENDPOINT: https://obs.eu-de.otc.t-systems.com
+      run: |
+        terraform workspace select default
+        terraform workspace delete "pr-${{ github.event.pull_request.number }}"
+
+    - name: Post Cleanup Comment
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: '🧹 PR preview environment has been destroyed.'
+          });

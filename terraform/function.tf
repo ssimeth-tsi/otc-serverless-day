@@ -1,9 +1,15 @@
+variable "function_name_suffix" {
+  description = "Suffix to append to function name for PR environments"
+  default     = ""
+}
+
 locals {
   code_hash = filemd5("${path.module}/../code.zip")
+  function_name = "fastapi_function${var.function_name_suffix}"
 }
 
 resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
-  name        = "fastapi_function"  # Name changes with code
+  name        = local.function_name
   app         = "default"
   agency      = "functiongraph"
   handler     = "index.handler"

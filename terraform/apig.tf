@@ -11,7 +11,7 @@ variable "api_gateway_id" {
 resource "opentelekomcloud_apigw_api_v2" "user_api" {
   gateway_id             = var.api_gateway_id
   group_id               = opentelekomcloud_apigw_group_v2.user_api_group.id
-  name                   = "user-api"
+  name                   = "user-api${var.function_name_suffix}"
   type                   = "Public"
   request_protocol       = "HTTPS"
   request_method         = "ANY"
@@ -30,7 +30,7 @@ resource "opentelekomcloud_apigw_api_v2" "user_api" {
 resource "opentelekomcloud_apigw_api_v2" "root_api" {
   gateway_id             = var.api_gateway_id
   group_id               = opentelekomcloud_apigw_group_v2.user_api_group.id
-  name                   = "root-api"
+  name                   = "root-api${var.function_name_suffix}"
   type                   = "Public"
   request_protocol       = "HTTPS"
   request_method         = "GET"
@@ -49,7 +49,7 @@ resource "opentelekomcloud_apigw_api_v2" "root_api" {
 # API Group erstellen
 resource "opentelekomcloud_apigw_group_v2" "user_api_group" {
   instance_id = var.api_gateway_id
-  name        = "user-api-group"
+  name        = "user-api-group${var.function_name_suffix}"
   description = "API Group for User Management FastAPI Application"
 }
 
