@@ -261,26 +261,24 @@ jobs:
         else:
             comment += "\n❌ **Significant performance issues detected. Please investigate before merging.**"
 
-        with open("pr_comment.md", "w") as f:
-            f.write(comment)
+        # Save as JSON for safer GitHub Actions output
+        output_data = {"comment": comment}
+        with open("pr_comment.json", "w") as f:
+            json.dump(output_data, f)
         
         print(comment)
         EOF
         
         python format_results.py "${{ github.event.pull_request.number }}" "${{ steps.terraform_apply.outputs.api_url }}"
-        
-        # Save comment to output using a unique delimiter
-        DELIMITER=$(echo $RANDOM | md5sum | head -c 20)
-        echo "comment<<$DELIMITER" >> $GITHUB_OUTPUT
-        cat pr_comment.md >> $GITHUB_OUTPUT
-        echo "$DELIMITER" >> $GITHUB_OUTPUT
 
     - name: Post Performance Results to PR
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const comment = `${{ steps.format_results.outputs.comment }}`;
+          const fs = require('fs');
+          const commentData = JSON.parse(fs.readFileSync('pr_comment.json', 'utf8'));
+          const comment = commentData.comment;
           
           // Try to find and update existing comment
           const { data: comments } = await github.rest.issues.listComments({
