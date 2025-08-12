@@ -1,0 +1,34 @@
+locals {
+  code_hash = filemd5("${path.module}/../code.zip")
+}
+
+resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
+  name        = "fastapi_function"  # Name changes with code
+  app         = "default"
+  agency      = "functiongraph"
+  handler     = "index.handler"
+  memory_size = 256
+  timeout     = 30
+  runtime     = "Python3.9"
+  code_type   = "zip"
+  func_code   = filebase64("${path.module}/../code.zip")
+  
+  user_data = jsonencode({
+    DATABASE_URL = "sqlite:///tmp/users.db"
+  })
+  
+  lifecycle {
+    ignore_changes = [user_data]
+  }
+}
+
+# Output für Function URN
+output "function_urn" {
+  value       = opentelekomcloud_fgs_function_v2.fastapi_function.urn
+  description = "URN of the deployed Function"
+}
+
+output "function_name" {
+  value       = opentelekomcloud_fgs_function_v2.fastapi_function.name
+  description = "Name of the deployed Function"
+}
