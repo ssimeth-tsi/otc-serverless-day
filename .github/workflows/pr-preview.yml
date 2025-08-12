@@ -181,9 +181,7 @@ jobs:
                     "min_ms": round(min(response_times), 2),
                     "max_ms": round(max(response_times), 2),
                     "mean_ms": round(statistics.mean(response_times), 2),
-                    "median_ms": round(statistics.median(response_times), 2),
-                    "p95_ms": round(statistics.quantiles(response_times, n=20)[18], 2) if len(response_times) > 20 else None,
-                    "p99_ms": round(statistics.quantiles(response_times, n=100)[98], 2) if len(response_times) > 100 else None
+                    "median_ms": round(statistics.median(response_times), 2)
                 }
             else:
                 return {"error": "All requests failed"}
@@ -239,8 +237,6 @@ jobs:
         | Mean Response Time | {data['mean_ms']} ms |
         | Median Response Time | {data['median_ms']} ms |
         | Max Response Time | {data['max_ms']} ms |
-        | P95 Response Time | {data.get('p95_ms', 'N/A')} ms |
-        | P99 Response Time | {data.get('p99_ms', 'N/A')} ms |
         """
 
         comment = f"""## 🚀 Performance Test Results for PR #{sys.argv[1]}
