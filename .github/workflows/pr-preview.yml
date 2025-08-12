@@ -363,6 +363,12 @@ jobs:
         WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
         terraform workspace select $WORKSPACE_NAME
 
+    - name: Create dummy code.zip for destroy
+      run: |
+        echo "dummy" > dummy.txt
+        zip code.zip dummy.txt
+        rm dummy.txt
+
     - name: Destroy PR Environment
       working-directory: ./terraform
       env:
