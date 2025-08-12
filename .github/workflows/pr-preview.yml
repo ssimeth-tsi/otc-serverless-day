@@ -11,6 +11,11 @@ env:
   PYTHON_VERSION: '3.9'
   TERRAFORM_VERSION: '1.5.7'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
@@ -320,7 +325,12 @@ jobs:
         echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
         echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Performance test results have been posted to the PR comments." >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        # Also add performance results to summary
+        if [ -f "pr_comment.json" ]; then
+          cat pr_comment.json | jq -r '.comment' >> $GITHUB_STEP_SUMMARY
+        fi
 
   cleanup-on-close:
     if: github.event.action == 'closed'
