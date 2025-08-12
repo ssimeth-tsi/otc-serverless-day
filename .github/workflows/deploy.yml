@@ -1,0 +1,143 @@
+name: Deploy to OTC FunctionGraph
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # Allows manual trigger
+
+env:
+  PYTHON_VERSION: '3.9'
+  TERRAFORM_VERSION: '1.5.7'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install dependencies for packaging
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests  # For createZip.py if needed
+
+    - name: Build Linux dependencies with Docker
+      run: |
+        echo "Building dependencies for Linux..."
+        chmod +x packDependencies.sh
+        ./packDependencies.sh
+
+    - name: Create deployment package
+      run: |
+        echo "Creating code.zip..."
+        python3 createZip.py
+        ls -lh code.zip
+        echo "Package size: $(du -h code.zip | cut -f1)"
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Terraform Init
+      working-directory: ./terraform
+      run: terraform init
+
+    - name: Terraform Format Check
+      working-directory: ./terraform
+      run: terraform fmt -check
+      continue-on-error: true
+
+    - name: Terraform Plan
+      working-directory: ./terraform
+      env:
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+      run: |
+        terraform plan -out=tfplan
+        terraform show -no-color tfplan
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      working-directory: ./terraform
+      env:
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+      run: terraform apply -auto-approve
+
+    - name: Output deployment info
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      working-directory: ./terraform
+      env:
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+      run: |
+        echo "### Deployment successful! 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### API Endpoints:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        terraform output -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"' >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+    - name: Test API Health Check
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      working-directory: ./terraform
+      env:
+        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
+        TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
+      run: |
+        API_URL=$(terraform output -json | jq -r '.api_info.value.user_api_url')
+        echo "Testing API at: $API_URL"
+        curl -f --max-time 30 "$API_URL" || echo "API test failed"
+      continue-on-error: true
+
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Validate Python syntax
+      run: |
+        python -m py_compile src/index.py
+        python -m py_compile createZip.py
+
+    - name: Check file sizes
+      run: |
+        echo "### File Sizes 📦" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        ls -lh src/*.py >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
