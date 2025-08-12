@@ -33,7 +33,7 @@ def init_db():
 @app.get("/")
 async def root():
     """Health Check"""
-    return {"status": "healthy", "service": "User API"}
+    return {"status": "healthy", "service": "User API", "version": "1.0.1-pr-test"}
 
 @app.get("/users")
 async def get_users():
@@ -86,7 +86,7 @@ def handler(event, context):
     
     # Route handling
     if path == '/' and method == 'GET':
-        result = {"status": "healthy", "service": "User API"}
+        result = {"status": "healthy", "service": "User API", "version": "1.0.1-pr-test"}
         
     elif path == '/users' and method == 'GET':
         conn = sqlite3.connect('/tmp/users.db')
