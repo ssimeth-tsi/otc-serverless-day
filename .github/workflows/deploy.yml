@@ -56,7 +56,13 @@ jobs:
 
     - name: Terraform Init
       working-directory: ./terraform
-      run: terraform init
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
+      run: |
+        terraform init \
+          -backend-config="access_key=${{ secrets.OTC_ACCESS_KEY }}" \
+          -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}"
 
     - name: Terraform Format Check
       working-directory: ./terraform
