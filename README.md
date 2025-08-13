@@ -65,7 +65,7 @@ gh pr create --title "My Feature" --body "Description"
 ### Local Development
 ```bash
  terraform init \
-    -backend-config="endpoint=https://obs.$OTC_REGION.otc.t-systems.com" \
+    -backend-config="endpoints={s3=\"https://obs.$OTC_REGION.otc.t-systems.com\"}" \
     -backend-config="bucket=$OTC_BUCKET" \
     -backend-config="key=terraform-state/otc-serverless" \
     -backend-config="region=$OTC_REGION" \
@@ -73,7 +73,9 @@ gh pr create --title "My Feature" --body "Description"
     -backend-config="secret_key=$OTC_SECRET_KEY" \
     -backend-config="skip_credentials_validation=true" \
     -backend-config="skip_region_validation=true" \
-    -backend-config="skip_metadata_api_check=true"
+    -backend-config="skip_metadata_api_check=true" \
+    -backend-config="skip_requesting_account_id=true" \
+    -backend-config="force_path_style=true"
 
 ./deploy.sh
 ```
