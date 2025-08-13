@@ -1,13 +1,12 @@
 # ------------------------
 ## API Gateway Configuration
 
-# Variable für die Gateway ID
+# Variable for the Gateway ID
 variable "api_gateway_id" {
   description = "ID of the dedicated API Gateway"
-  default     = "ca0329375f9848578a4423f86eff3392"
 }
 
-# API erstellen
+# Create API
 resource "opentelekomcloud_apigw_api_v2" "user_api" {
   gateway_id             = var.api_gateway_id
   group_id               = opentelekomcloud_apigw_group_v2.user_api_group.id
@@ -26,7 +25,7 @@ resource "opentelekomcloud_apigw_api_v2" "user_api" {
   }
 }
 
-# Root API für Health Check
+# Root API for Health Check
 resource "opentelekomcloud_apigw_api_v2" "root_api" {
   gateway_id             = var.api_gateway_id
   group_id               = opentelekomcloud_apigw_group_v2.user_api_group.id
@@ -45,21 +44,21 @@ resource "opentelekomcloud_apigw_api_v2" "root_api" {
   }
 }
 
-# API Group erstellen
+# Create API Group
 resource "opentelekomcloud_apigw_group_v2" "user_api_group" {
   instance_id = var.api_gateway_id
   name        = "user-api-group${var.function_name_suffix}"
   description = "API Group for User Management FastAPI Application"
 }
 
-# Verwende das existierende RELEASE Environment
-# Die Environment-ID muss manuell ermittelt werden
+# Use the existing RELEASE environment
+# The Environment ID must be determined manually
 variable "release_env_id" {
   description = "ID of the existing RELEASE environment"
-  default     = "DEFAULT_ENVIRONMENT_RELEASE_ID"  # Diese ID muss aus der Console ermittelt werden
+  default     = "DEFAULT_ENVIRONMENT_RELEASE_ID"  # This ID must be determined from the console
 }
 
-# API publizieren im RELEASE Environment
+# Publish API in RELEASE Environment
 resource "opentelekomcloud_apigw_api_publishment_v2" "user_api_publish" {
   gateway_id     = var.api_gateway_id
   environment_id = var.release_env_id
@@ -73,7 +72,6 @@ resource "opentelekomcloud_apigw_api_publishment_v2" "root_api_publish" {
 }
 
 
-
 # Outputs
 output "api_info" {
   value = {
@@ -85,12 +83,6 @@ output "api_info" {
     gateway_id      = var.api_gateway_id
   }
   description = "API information"
-}
-
-# Separate outputs to avoid GitHub masking
-output "api_base_url" {
-  value = format("https://%s.apic.eu-de.otc.t-systems.com", opentelekomcloud_apigw_group_v2.user_api_group.id)
-  description = "Base URL of the API"
 }
 
 output "api_endpoints" {

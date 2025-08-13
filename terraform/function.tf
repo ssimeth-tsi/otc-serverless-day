@@ -28,7 +28,7 @@ resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
   }
 }
 
-# Output für Function URN
+# Output for Function URN
 output "function_urn" {
   value       = opentelekomcloud_fgs_function_v2.fastapi_function.urn
   description = "URN of the deployed Function"

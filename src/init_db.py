@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Initialisierungsskript für die SQLite-Datenbank mit Beispieldaten
+Initialization script for SQLite database with sample data
 """
 
 from sqlalchemy import create_engine
@@ -12,17 +12,17 @@ DATABASE_URL = "sqlite:///./users.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Tabellen erstellen
+# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Beispieldaten einfügen
+# Insert sample data
 db = SessionLocal()
 
 try:
-    # Prüfen ob bereits Daten vorhanden sind
+    # Check if data already exists
     existing = db.query(UserDB).first()
     if not existing:
-        # Beispiel-Benutzer erstellen
+        # Create sample users
         users = [
             UserDB(name="Max Mustermann", email="max@example.com", age=30),
             UserDB(name="Anna Schmidt", email="anna@example.com", age=25),
@@ -35,12 +35,12 @@ try:
             db.add(user)
         
         db.commit()
-        print(f"✅ {len(users)} Beispiel-Benutzer wurden erfolgreich erstellt")
+        print(f"✅ {len(users)} sample users created successfully")
     else:
-        print("ℹ️  Datenbank enthält bereits Daten")
+        print("ℹ️  Database already contains data")
         
 except Exception as e:
-    print(f"❌ Fehler beim Initialisieren der Datenbank: {e}")
+    print(f"❌ Error initializing database: {e}")
     db.rollback()
 finally:
     db.close()

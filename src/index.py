@@ -71,7 +71,7 @@ async def get_user(user_id: int):
         }
     return {"error": "User not found"}
 
-# Handler für FunctionGraph
+# Handler for FunctionGraph
 def handler(event, context):
     """FunctionGraph handler"""
     import json
