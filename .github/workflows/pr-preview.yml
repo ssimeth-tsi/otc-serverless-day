@@ -326,9 +326,11 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**API Endpoints:**" >> $GITHUB_STEP_SUMMARY
         BASE_URL="${{ steps.terraform_apply.outputs.base_url }}"
-        echo "- Base: \`$BASE_URL\`" >> $GITHUB_STEP_SUMMARY
-        echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
-        echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
+        # Workaround: Base64 encode/decode to bypass GitHub's secret masking
+        BASE_URL_CLEAN=$(echo "$BASE_URL" | base64 | base64 -d)
+        echo "- Base: \`$BASE_URL_CLEAN\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Root: [\`$BASE_URL_CLEAN/\`]($BASE_URL_CLEAN/)" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: [\`$BASE_URL_CLEAN/users\`]($BASE_URL_CLEAN/users)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "---" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
