@@ -54,13 +54,13 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
       run: |
         terraform init \
-          -backend-config="endpoint=https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com" \
-          -backend-config="bucket=${{ secrets.OTC_BUCKET }}" \
+          -backend-config="endpoint=https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com" \
+          -backend-config="bucket=${{ vars.OTC_BUCKET }}" \
           -backend-config="key=terraform-state/otc-serverless" \
-          -backend-config="region=${{ secrets.OTC_REGION }}" \
+          -backend-config="region=${{ vars.OTC_REGION }}" \
           -backend-config="access_key=${{ secrets.OTC_ACCESS_KEY }}" \
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
@@ -78,10 +78,10 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
-        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
-        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
-        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
       run: |
@@ -94,10 +94,10 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
-        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
-        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
-        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
       run: terraform apply -auto-approve
@@ -108,10 +108,10 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
-        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
-        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
-        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
       run: |
@@ -123,15 +123,12 @@ jobs:
         # Get outputs without masking
         BASE_URL=$(terraform output -raw api_base_url)
         
-        # Workaround: Base64 encode/decode to bypass GitHub's secret masking
-        BASE_URL_CLEAN=$(echo "$BASE_URL" | base64 | base64 -d)
-        
         # Display as clickable links
-        echo "**Base URL:** \`$BASE_URL_CLEAN\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Base URL:** \`$BASE_URL\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Endpoints:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Root: [\`$BASE_URL_CLEAN/\`]($BASE_URL_CLEAN/)" >> $GITHUB_STEP_SUMMARY
-        echo "- Users: [\`$BASE_URL_CLEAN/users\`]($BASE_URL_CLEAN/users)" >> $GITHUB_STEP_SUMMARY
+        echo "- Root: [\`$BASE_URL/\`]($BASE_URL/)" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: [\`$BASE_URL/users\`]($BASE_URL/users)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Additional info
@@ -148,10 +145,10 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
-        TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
-        TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
-        TF_VAR_region: ${{ secrets.OTC_REGION }}
+        AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
+        TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
+        TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
       run: |
