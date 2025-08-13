@@ -54,18 +54,19 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_S3_ENDPOINT: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
       run: |
         terraform init \
-          -backend-config="endpoint=https://obs.eu-de.otc.t-systems.com" \
+          -backend-config="endpoints={s3=\"https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com\"}" \
           -backend-config="bucket=${{ secrets.OTC_BUCKET }}" \
           -backend-config="key=terraform-state/otc-serverless" \
-          -backend-config="region=eu-de" \
+          -backend-config="region=${{ secrets.OTC_REGION }}" \
           -backend-config="access_key=${{ secrets.OTC_ACCESS_KEY }}" \
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
           -backend-config="skip_region_validation=true" \
-          -backend-config="skip_metadata_api_check=true"
+          -backend-config="skip_metadata_api_check=true" \
+          -backend-config="skip_requesting_account_id=true"
 
     - name: Terraform Format Check
       working-directory: ./terraform
@@ -77,7 +78,7 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_S3_ENDPOINT: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -93,7 +94,7 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_S3_ENDPOINT: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -107,7 +108,7 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_S3_ENDPOINT: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
@@ -144,7 +145,7 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
-        AWS_S3_ENDPOINT: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
+        AWS_ENDPOINT_URL_S3: https://obs.${{ secrets.OTC_REGION }}.otc.t-systems.com
         TF_VAR_domain_name: ${{ secrets.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ secrets.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ secrets.OTC_REGION }}
