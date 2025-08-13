@@ -37,7 +37,7 @@ Each PR gets an isolated preview environment:
   - `OTC_ACCESS_KEY`  - Access Key ID für OTC API
   - `OTC_SECRET_KEY`  - Secret Access Key für OTC API
 - GitHub Variables:
-  - `OTC_DOMAIN_NAME` - OTC Domain (z.B. OTC00000000001000xxxxxx)
+  - `OTC_DOMAIN_NAME` - OTC Domain (e.g. OTC00000000001000xxxxxx)
   - `OTC_TENANT_NAME` - Tenant/Project Name
   - `OTC_REGION`      - Region (eu-de, eu-nl)
   - `OTC_BUCKET`      - OBS Bucket for Terraform State
