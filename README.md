@@ -32,12 +32,15 @@ Each PR gets an isolated preview environment:
 
 ### Prerequisites
 - OTC Account with FunctionGraph & API Gateway
+- OBS Bucket 
 - GitHub Secrets:
   - `OTC_ACCESS_KEY`
   - `OTC_SECRET_KEY`
   - `OTC_DOMAIN_NAME`
   - `OTC_TENANT_NAME`
   - `OTC_REGION`
+  - `OTC_BUCKET`
+
 
 ### Creating a PR for Testing
 ```bash
