@@ -85,6 +85,11 @@ output "api_info" {
   description = "API information"
 }
 
+output "api_base_url" {
+  value = format("https://%s.apic.eu-de.otc.t-systems.com", opentelekomcloud_apigw_group_v2.user_api_group.id)
+  description = "Base URL of the API"
+}
+
 output "api_endpoints" {
   value = {
     root  = "/"
