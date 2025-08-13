@@ -34,12 +34,12 @@ Each PR gets an isolated preview environment:
 - OTC Account with FunctionGraph & API Gateway
 - OBS Bucket 
 - GitHub Secrets:
-  - `OTC_ACCESS_KEY`
-  - `OTC_SECRET_KEY`
-  - `OTC_DOMAIN_NAME`
-  - `OTC_TENANT_NAME`
-  - `OTC_REGION`
-  - `OTC_BUCKET`
+  - `OTC_ACCESS_KEY`  - Access Key ID für OTC API
+  - `OTC_SECRET_KEY`  - Secret Access Key für OTC API
+  - `OTC_DOMAIN_NAME` - OTC Domain (z.B. OTC00000000001000xxxxxx)
+  - `OTC_TENANT_NAME` - Tenant/Project Name
+  - `OTC_REGION`      - Region (eu-de, eu-nl)
+  - `OTC_BUCKET`      - OBS Bucket for Terraform State
 
 
 ### Creating a PR for Testing
