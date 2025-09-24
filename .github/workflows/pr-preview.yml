@@ -358,7 +358,8 @@ jobs:
     - name: Select PR Workspace
       working-directory: ./terraform
       run: |
-        terraform workspace select "$TF_WORKSPACE"
+        WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
+        terraform workspace select $WORKSPACE_NAME
 
     - name: Create dummy code.zip for destroy
       run: |
@@ -376,7 +377,7 @@ jobs:
       working-directory: ./terraform
       run: |
         terraform workspace select default
-        terraform workspace delete "$TF_WORKSPACE"
+        terraform workspace delete "pr-${{ github.event.pull_request.number }}"
 
     - name: Post Cleanup Comment
       uses: actions/github-script@v7
