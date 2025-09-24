@@ -63,6 +63,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         terraform init \
           -backend-config="endpoint=https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com" \
@@ -73,6 +75,7 @@ jobs:
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
           -backend-config="skip_region_validation=true" \
+          -backend-config="skip_s3_checksum=true" \
           -backend-config="skip_metadata_api_check=true" \
           -backend-config="force_path_style=true"
 
@@ -82,6 +85,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
         terraform workspace select $WORKSPACE_NAME || terraform workspace new $WORKSPACE_NAME
@@ -92,12 +97,16 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
         TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
+        TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
+        TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
         TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
       run: |
         terraform plan -out=tfplan \
@@ -110,12 +119,16 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
         TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
+        TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
+        TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
         TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
       run: |
         terraform apply -auto-approve \
@@ -358,6 +371,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         terraform init \
           -backend-config="endpoint=https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com" \
@@ -368,6 +383,7 @@ jobs:
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
           -backend-config="skip_region_validation=true" \
+          -backend-config="skip_s3_checksum=true" \
           -backend-config="skip_metadata_api_check=true" \
           -backend-config="force_path_style=true"
 
@@ -377,6 +393,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         WORKSPACE_NAME="pr-${{ github.event.pull_request.number }}"
         terraform workspace select $WORKSPACE_NAME
@@ -393,12 +411,16 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
         TF_VAR_domain_name: ${{ vars.OTC_DOMAIN_NAME }}
         TF_VAR_tenant_name: ${{ vars.OTC_TENANT_NAME }}
         TF_VAR_region: ${{ vars.OTC_REGION }}
         TF_VAR_access_key: ${{ secrets.OTC_ACCESS_KEY }}
         TF_VAR_secret_key: ${{ secrets.OTC_SECRET_KEY }}
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
+        TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
+        TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
         TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
       run: |
         terraform destroy -auto-approve \
@@ -410,6 +432,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.OTC_ACCESS_KEY }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.OTC_SECRET_KEY }}
         AWS_ENDPOINT_URL_S3: https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com
+        AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+        AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         terraform workspace select default
         terraform workspace delete "pr-${{ github.event.pull_request.number }}"
