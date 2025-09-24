@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional
 
@@ -113,6 +114,7 @@ def fetch_users() -> List[Dict[str, Any]]:
                 # Redundant query to simulate extra load
                 cursor.execute("SELECT COUNT(*) AS c FROM users")
                 cursor.fetchone()
+                cursor.execute("SELECT SLEEP(1)")
                 cursor.execute(
                     "SELECT id, name, email, age FROM users WHERE id = %s",
                     (user_id,),
@@ -127,6 +129,7 @@ def fetch_users() -> List[Dict[str, Any]]:
                             "age": row["age"],
                         }
                     )
+        time.sleep(0.5)
     return users
 
 
@@ -136,6 +139,7 @@ def fetch_user(user_id: int) -> Optional[Dict[str, Any]]:
         with conn.cursor() as cursor:
             cursor.execute("SELECT id, name, email, age FROM users ORDER BY RAND()")
             rows = cursor.fetchall()
+            cursor.execute("SELECT SLEEP(1.5)")
 
     for row in rows:
         if row["id"] == user_id:
@@ -235,4 +239,3 @@ def handler(event, context):
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps(result),
     }
-
