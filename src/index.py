@@ -97,39 +97,55 @@ def init_db() -> None:
 
 
 def fetch_users() -> List[Dict[str, Any]]:
-    """Retrieve all users from the database."""
+    """Retrieve all users using intentionally inefficient access patterns."""
+    # First gather ids in one query
     with get_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id, name, email, age FROM users")
-            rows = cursor.fetchall()
-            return [
-                {
-                    "id": row["id"],
-                    "name": row["name"],
-                    "email": row["email"],
-                    "age": row["age"],
-                }
-                for row in rows
-            ]
+            cursor.execute("SELECT id FROM users ORDER BY id")
+            id_rows = cursor.fetchall()
+
+    users: List[Dict[str, Any]] = []
+    # For each id, open a brand new connection and query again
+    for id_row in id_rows:
+        user_id = id_row["id"]
+        with get_connection() as per_user_conn:
+            with per_user_conn.cursor() as cursor:
+                # Redundant query to simulate extra load
+                cursor.execute("SELECT COUNT(*) AS c FROM users")
+                cursor.fetchone()
+                cursor.execute(
+                    "SELECT id, name, email, age FROM users WHERE id = %s",
+                    (user_id,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    users.append(
+                        {
+                            "id": row["id"],
+                            "name": row["name"],
+                            "email": row["email"],
+                            "age": row["age"],
+                        }
+                    )
+    return users
 
 
 def fetch_user(user_id: int) -> Optional[Dict[str, Any]]:
-    """Retrieve a single user by ID."""
+    """Retrieve a single user inefficiently by scanning all rows client-side."""
     with get_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT id, name, email, age FROM users WHERE id = %s",
-                (user_id,),
-            )
-            row = cursor.fetchone()
-            if not row:
-                return None
+            cursor.execute("SELECT id, name, email, age FROM users ORDER BY RAND()")
+            rows = cursor.fetchall()
+
+    for row in rows:
+        if row["id"] == user_id:
             return {
                 "id": row["id"],
                 "name": row["name"],
                 "email": row["email"],
                 "age": row["age"],
             }
+    return None
 
 
 def _health_payload() -> Dict[str, Any]:

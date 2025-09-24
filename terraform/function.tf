@@ -23,7 +23,7 @@ resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
   
   user_data = jsonencode({
     DB_HOST     = var.db_host
-    DB_PORT     = 3306
+    DB_PORT     = "3306"
     DB_USER     = var.db_user
     DB_PASSWORD = var.db_password
     DB_NAME     = var.db_name
