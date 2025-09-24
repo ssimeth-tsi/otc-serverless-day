@@ -67,7 +67,7 @@ jobs:
         AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         terraform init \
-          -backend-config="endpoint=https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com" \
+          -backend-config="endpoints={s3=\"https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com\"}" \
           -backend-config="bucket=${{ vars.OTC_BUCKET }}" \
           -backend-config="key=terraform-state/otc-serverless" \
           -backend-config="region=${{ vars.OTC_REGION }}" \
@@ -75,8 +75,9 @@ jobs:
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
           -backend-config="skip_region_validation=true" \
-          -backend-config="skip_s3_checksum=true" \
           -backend-config="skip_metadata_api_check=true" \
+          -backend-config="skip_requesting_account_id=true" \
+          -backend-config="skip_s3_checksum=true" \
           -backend-config="force_path_style=true"
 
     - name: Create/Select PR Workspace
@@ -383,8 +384,9 @@ jobs:
           -backend-config="secret_key=${{ secrets.OTC_SECRET_KEY }}" \
           -backend-config="skip_credentials_validation=true" \
           -backend-config="skip_region_validation=true" \
-          -backend-config="skip_s3_checksum=true" \
           -backend-config="skip_metadata_api_check=true" \
+          -backend-config="skip_requesting_account_id=true" \
+          -backend-config="skip_s3_checksum=true" \
           -backend-config="force_path_style=true"
 
     - name: Select PR Workspace
