@@ -16,6 +16,8 @@ resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
   memory_size = 256
   timeout     = 30
   runtime     = "Python3.9"
+  vpc_id      = var.vpc_id
+  network_id  = var.network_id
   code_type   = "zip"
   func_code   = filebase64("${path.module}/../code.zip")
   

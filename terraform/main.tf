@@ -52,3 +52,11 @@ variable "secret_key" {
   description = "Your SK set as TF_VAR_secret_key"
 }
 
+variable "vpc_id" {
+  description = "VPC ID where the function will be deployed"
+}
+
+variable "network_id" {
+  description = "Network ID (subnet) where the function will be deployed"
+}
+
