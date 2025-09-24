@@ -24,7 +24,6 @@ env:
   TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
   TF_VAR_db_host: ${{ vars.OTC_DB_HOST }}
   TF_VAR_db_password: ${{ secrets.OTC_DB_PW }}
-  TF_WORKSPACE: pr-${{ github.event.pull_request.number }}
 
 permissions:
   contents: read
@@ -92,7 +91,7 @@ jobs:
     - name: Create/Select PR Workspace
       working-directory: ./terraform
       run: |
-        WORKSPACE_NAME="$TF_WORKSPACE"
+        WORKSPACE_NAME=pr-${{ github.event.pull_request.number }}
         terraform workspace select "$WORKSPACE_NAME" || terraform workspace new "$WORKSPACE_NAME"
 
     - name: Terraform Plan
