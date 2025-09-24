@@ -22,7 +22,11 @@ resource "opentelekomcloud_fgs_function_v2" "fastapi_function" {
   func_code   = filebase64("${path.module}/../code.zip")
   
   user_data = jsonencode({
-    DATABASE_URL = "sqlite:///tmp/users.db"
+    DB_HOST     = var.db_host
+    DB_PORT     = 3306
+    DB_USER     = var.db_user
+    DB_PASSWORD = var.db_password
+    DB_NAME     = var.db_name
   })
   
   lifecycle {

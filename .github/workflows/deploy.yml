@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies for packaging
       run: |
         python -m pip install --upgrade pip
-        pip install requests  # For createZip.py if needed
+        pip install requests
 
     - name: Build Linux dependencies with Docker
       run: |
@@ -88,6 +88,8 @@ jobs:
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
         TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
         TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
+        TF_VAR_db_host: ${{ vars.OTC_DB_HOST }}
+        TF_VAR_db_password: ${{ secrets.OTC_DB_PW }}
       run: |
         terraform plan -out=tfplan
         terraform show -no-color tfplan
@@ -109,6 +111,8 @@ jobs:
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
         TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
         TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
+        TF_VAR_db_host: ${{ vars.OTC_DB_HOST }}
+        TF_VAR_db_password: ${{ secrets.OTC_DB_PW }}
       run: terraform apply -auto-approve
 
     - name: Output deployment info
@@ -128,6 +132,8 @@ jobs:
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
         TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
         TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
+        TF_VAR_db_host: ${{ vars.OTC_DB_HOST }}
+        TF_VAR_db_password: ${{ secrets.OTC_DB_PW }}
       run: |
         echo "### Deployment successful! 🚀" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -170,6 +176,8 @@ jobs:
         TF_VAR_api_gateway_id: ${{ vars.OTC_API_GATEWAY_ID }}
         TF_VAR_vpc_id: ${{ vars.OTC_VPC_ID }}
         TF_VAR_network_id: ${{ vars.OTC_NETWORK_ID }}
+        TF_VAR_db_host: ${{ vars.OTC_DB_HOST }}
+        TF_VAR_db_password: ${{ secrets.OTC_DB_PW }}
       run: |
         BASE_URL=$(terraform output -raw api_base_url)
         API_URL="${BASE_URL}/users"

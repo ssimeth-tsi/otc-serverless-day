@@ -61,3 +61,21 @@ variable "network_id" {
   description = "Network ID (subnet) where the function will be deployed"
 }
 
+variable "db_host" {
+  description = "Hostname or IP address of the MySQL database"
+}
+
+variable "db_password" {
+  description = "Password for connecting to the MySQL database"
+  sensitive   = true
+}
+
+variable "db_user" {
+  description = "Username for the MySQL database"
+  default     = "root"
+}
+
+variable "db_name" {
+  description = "Database name to use in MySQL"
+  default     = "users"
+}
