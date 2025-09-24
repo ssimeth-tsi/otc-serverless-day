@@ -59,7 +59,7 @@ jobs:
         AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       run: |
         terraform init \
-          -backend-config="endpoint=https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com" \
+          -backend-config="endpoints={s3=\"https://obs.${{ vars.OTC_REGION }}.otc.t-systems.com\"}" \
           -backend-config="bucket=${{ vars.OTC_BUCKET }}" \
           -backend-config="key=terraform-state/otc-serverless" \
           -backend-config="region=${{ vars.OTC_REGION }}" \
