@@ -4,12 +4,13 @@
 terraform {
   # Backend configuration via CLI parameters
   # Initialize with: terraform init -backend-config=...
-  backend "s3" {}
-
+  backend "s3" {
+  }
+  
   required_providers {
     opentelekomcloud = {
       source = "opentelekomcloud/opentelekomcloud"
-      version = ">=1.36.44"
+      version = ">=1.36.47"
     }
   }
 }
