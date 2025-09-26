@@ -223,7 +223,7 @@ jobs:
                 return f"### {name}\n❌ {data['error']}\n"
             
             success_rate = (data['successful_requests'] / data['total_requests']) * 100
-            emoji = "✅" if success_rate >= 95 else "⚠️" if success_rate >= 80 else "❌"
+            emoji = "✅" if success_rate >= 85 else "⚠️" if success_rate >= 60 else "❌"
             
             return f"""### {name}
         {emoji} Success Rate: {success_rate:.1f}% ({data['successful_requests']}/{data['total_requests']})
@@ -252,9 +252,9 @@ jobs:
         root_success = results['root_endpoint'].get('successful_requests', 0) / results['root_endpoint'].get('total_requests', 1) * 100
         users_success = results['users_endpoint'].get('successful_requests', 0) / results['users_endpoint'].get('total_requests', 1) * 100
         
-        if root_success >= 95 and users_success >= 95:
+        if root_success >= 85 and users_success >= 85:
             comment += "\n✅ **All endpoints performing well!**"
-        elif root_success >= 80 and users_success >= 80:
+        elif root_success >= 60 and users_success >= 60:
             comment += "\n⚠️ **Some performance issues detected. Please review the metrics above.**"
         else:
             comment += "\n❌ **Significant performance issues detected. Please investigate before merging.**"

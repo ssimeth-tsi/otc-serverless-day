@@ -132,6 +132,7 @@ def fetch_users() -> List[Dict[str, Any]]:
         time.sleep(0.5)
     return users
 
+
 def fetch_user(user_id: int) -> Optional[Dict[str, Any]]:
     """Retrieve a single user inefficiently by scanning all rows client-side."""
     with get_connection() as conn:
