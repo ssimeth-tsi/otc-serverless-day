@@ -98,39 +98,20 @@ def init_db() -> None:
 
 
 def fetch_users() -> List[Dict[str, Any]]:
-    """Retrieve all users using intentionally inefficient access patterns."""
-    # First gather ids in one query
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM users ORDER BY id")
-            id_rows = cursor.fetchall()
-
-    users: List[Dict[str, Any]] = []
-    # For each id, open a brand new connection and query again
-    for id_row in id_rows:
-        user_id = id_row["id"]
-        with get_connection() as per_user_conn:
-            with per_user_conn.cursor() as cursor:
-                # Redundant query to simulate extra load
-                cursor.execute("SELECT COUNT(*) AS c FROM users")
-                cursor.fetchone()
-                cursor.execute("SELECT SLEEP(1)")
-                cursor.execute(
-                    "SELECT id, name, email, age FROM users WHERE id = %s",
-                    (user_id,),
-                )
-                row = cursor.fetchone()
-                if row:
-                    users.append(
-                        {
-                            "id": row["id"],
-                            "name": row["name"],
-                            "email": row["email"],
-                            "age": row["age"],
-                        }
-                    )
-        time.sleep(0.5)
-    return users
+      """Retrieve all users efficiently."""
+      with get_connection() as conn:
+          with conn.cursor() as cursor:
+              cursor.execute("SELECT id, name, email, age FROM users ORDER BY id")
+              rows = cursor.fetchall()
+      return [
+          {
+              "id": row["id"],
+              "name": row["name"],
+              "email": row["email"],
+              "age": row["age"],
+          }
+          for row in rows
+      ]
 
 
 def fetch_user(user_id: int) -> Optional[Dict[str, Any]]:
